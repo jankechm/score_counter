@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Custom
+matrix/DigitDoubleBuf.py
+matrix/FontDoubleBuf.py
+matrix/fonts.py
+
