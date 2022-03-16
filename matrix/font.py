@@ -1,3 +1,6 @@
+# Author: Marek Jankech
+# Copyright Marek Jankech 2022 Released under the MIT license
+
 from matrix.char import Char
 from matrix.line import VerticalLine, HorizontalLine
 

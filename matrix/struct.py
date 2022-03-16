@@ -1,4 +1,5 @@
 # Author: Marek Jankech
+# Copyright Marek Jankech 2022 Released under the MIT license
 
 class score:
     def __init__(self, left: int, right: int) -> None:

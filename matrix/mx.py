@@ -1,4 +1,5 @@
 # Author: Marek Jankech
+# Copyright Marek Jankech 2022 Released under the MIT license
 
 from machine import Pin, SPI
 from utime import sleep_ms

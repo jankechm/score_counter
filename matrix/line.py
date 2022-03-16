@@ -1,3 +1,6 @@
+# Author: Marek Jankech
+# Copyright Marek Jankech 2022 Released under the MIT license
+
 class HorizontalLine:
 	def __init__(self, start_x: int, start_y: int, width: int):
 		"""

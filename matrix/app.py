@@ -1,8 +1,8 @@
 # Author: Marek Jankech
+# Copyright Marek Jankech 2022 Released under the MIT license
 
 from machine import Pin, SPI, I2C
 from ir_rx.nec import NEC_8  # NEC remote, 8 bit addresses
-from ir_rx.print_error import print_error
 from matrix.mx import Matrix
 from matrix.clock import rtc
 from matrix.struct import datetime
