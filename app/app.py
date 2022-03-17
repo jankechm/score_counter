@@ -5,7 +5,7 @@ from machine import Pin, SPI, I2C
 from lib.ir_rx.nec import NEC_8  # NEC remote, 8 bit addresses
 from app.mx import Matrix
 from app.clock import rtc
-from app.struct import datetime
+from app.data import datetime
 
 import uasyncio as asyncio
 import app.constants as const

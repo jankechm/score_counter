@@ -2,7 +2,7 @@
 # Copyright Marek Jankech 2022 Released under the MIT license
 
 from machine import I2C
-from app.struct import config, score
+from app.data import config, score
 
 import app.constants as const
 

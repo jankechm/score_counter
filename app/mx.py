@@ -4,7 +4,7 @@
 from machine import Pin, SPI
 from utime import sleep_ms
 from app.char import Char
-from app.struct import datetime
+from app.data import datetime
 
 import app.constants as const
 import app.font as mx_font
