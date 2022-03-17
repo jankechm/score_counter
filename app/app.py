@@ -4,8 +4,9 @@
 from machine import Pin, SPI, I2C
 from lib.ir_rx.nec import NEC_8  # NEC remote, 8 bit addresses
 from app.mx import Matrix
-from app.clock import rtc
-from app.data import datetime
+from app.clock import RTC
+from mem import EEPROM
+from app.data import Datetime
 
 import uasyncio as asyncio
 import app.constants as const
@@ -38,7 +39,7 @@ class App:
 		
 		self.left_score = 0
 		self.right_score = 0
-		self.dt = datetime(2022, 1, 1, 0, 0, 0, 7)
+		self.dt = Datetime(2022, 1, 1, 0, 0, 0, 7)
 		self.brightness = 1
 		self.last_button = 0x00
 
@@ -240,7 +241,7 @@ class App:
 
 	def handle_btn_hash(self):
 		print("Resetting display...")
-		self.display.init_display()
+		self.display.init_display(self.config.bright_lvl)
 
 	def handle_btn_ok(self):
 		if self.set_left_score:
@@ -374,24 +375,26 @@ class App:
 			await asyncio.sleep_ms(0)
 
 	async def main(self):
+		self.score = self.memory.get_last_score()
+		self.config = self.memory.get_cfg()
+
 		recv_pin = Pin(const.RECV_PIN, Pin.IN)
 		# Set button_handler as remote control IRQ handler
 		self.receiver = NEC_8(recv_pin, self.button_handler)
-		# self.receiver.error_function(print_error)
 
-		# display SPI config
+		# display config
 		mx_spi = SPI(const.DISPLAY_SPI_ID, baudrate=const.DISPLAY_SPI_BAUD,
 			polarity=const.DISPLAY_SPI_POLARITY, phase=const.DISPLAY_SPI_PHASE,
 			sck=Pin(const.DISPLAY_SPI_CLK_PIN),
 			mosi=Pin(const.DISPLAY_SPI_MOSI_PIN))
 		cs_pin = Pin(const.DISPLAY_SPI_CS_PIN, Pin.OUT)
-		# TODO set initial brightness
-		self.display = Matrix(mx_spi, cs_pin)
+		self.display = Matrix(mx_spi, cs_pin, self.config.bright_lvl)
 
-		# real time clock I2C config
-		rtc_i2c = I2C(const.RTC_I2C_ID, sda=Pin(const.RTC_I2C_SDA_PIN, Pin.OPEN_DRAIN),
+		# Real Time Clock & EEPROM config - same I2C bus
+		rtc_mem_i2c = I2C(const.RTC_I2C_ID, sda=Pin(const.RTC_I2C_SDA_PIN, Pin.OPEN_DRAIN),
 		    scl=Pin(const.RTC_I2C_SCL_PIN, Pin.OPEN_DRAIN), freq=400_000)
-		self.clock = rtc(rtc_i2c)
+		self.clock = RTC(rtc_mem_i2c)
+		self.memory = EEPROM(rtc_mem_i2c)
 
 		self.ticks = utime.ticks_ms()
 

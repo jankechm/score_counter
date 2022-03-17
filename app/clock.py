@@ -2,11 +2,11 @@
 # Copyright Marek Jankech 2022 Released under the MIT license
 
 from machine import I2C
-from app.data import datetime
+from app.data import Datetime
 
 import app.constants as const
 
-class rtc:
+class RTC:
     "Adapted from https://github.com/peterhinch/micropython-samples/blob/master/DS3231/ds3231_port.py"
 
     def __init__(self, i2c: I2C):
@@ -24,7 +24,7 @@ class rtc:
     def _tobyte(self, num: int):
         return num.to_bytes(1, 'little')
     
-    def get_time(self) -> datetime:
+    def get_time(self) -> Datetime:
         self.i2c.readfrom_mem_into(const.DS3231_I2C_ADDR, 0, self.timebuf)
 
         seconds = self._bcd2dec(self.timebuf[const.SECONDS_MEM_ADDR])
@@ -35,9 +35,9 @@ class rtc:
         month = self._bcd2dec(self.timebuf[const.MONTH_MEM_ADDR] & 0x1f)
         year = self._bcd2dec(self.timebuf[const.YEAR_MEM_ADDR]) + const.MILLENIUM
 
-        return datetime(year, month, date, hours, minutes, seconds, weekday)
+        return Datetime(year, month, date, hours, minutes, seconds, weekday)
 
-    def set_time(self, dt: datetime):
+    def set_time(self, dt: Datetime):
         self.i2c.writeto_mem(const.DS3231_I2C_ADDR, const.SECONDS_MEM_ADDR,
             self._tobyte(self._dec2bcd(dt.seconds)))
         self.i2c.writeto_mem(const.DS3231_I2C_ADDR, const.MINUTES_MEM_ADDR,

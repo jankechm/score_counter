@@ -4,7 +4,7 @@
 from machine import Pin, SPI
 from utime import sleep_ms
 from app.char import Char
-from app.data import datetime
+from app.data import Datetime
 
 import app.constants as const
 import app.font as mx_font
@@ -18,7 +18,7 @@ class Matrix:
 	HALF_HEIGHT = const.ROWS_IN_MATRIX
 	BOTTOM_HALF_OFFSET = const.MATRIXES_IN_ROW * const.ROWS_IN_MATRIX
 
-	def __init__(self, spi: SPI, cs_pin: Pin):
+	def __init__(self, spi: SPI, cs_pin: Pin, bright_lvl: int):
 		"""
 		Provides operations for showing patterns on matrix display.
 		"""
@@ -32,9 +32,9 @@ class Matrix:
 			const.COLS_IN_MATRIX * const.MATRIXES_IN_ROW,
 			const.ROWS_IN_MATRIX * const.MATRIXES_IN_COL, framebuf.MONO_HLSB)
 
-		self.init_display()
+		self.init_display(bright_lvl)
 
-	def init_display(self):
+	def init_display(self, bright_lvl: int):
 		self._write(const.SHUTDOWN, const.SHUTDOWN_MODE_ON)
 
 		self._write(const.DISPLAYTEST, const.DISPLAY_TEST_ON)
@@ -43,7 +43,7 @@ class Matrix:
 
 		self._write(const.SCANLIMIT, const.SCANLIMIT_8_DIGITS)
 		self._write(const.DECODEMODE, const.NO_BCD_DECODE)
-		self._write(const.INTENSITY, const.INITIAL_BRIGHTNESS)
+		self._write(const.INTENSITY, bright_lvl)
 
 		self._write(const.SHUTDOWN, const.SHUTDOWN_MODE_OFF)
 
@@ -122,7 +122,7 @@ class Matrix:
 		# Some LEDs need to tell it twice to understand...
 		self.redraw()
 
-	def show_variable_info(self, x_shift: int, dt: datetime, celsius=-1):
+	def show_variable_info(self, x_shift: int, dt: Datetime, celsius=-1):
 		cursor = 0
 		font = mx_font.Medium()
 

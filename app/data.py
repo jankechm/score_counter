@@ -1,12 +1,12 @@
 # Author: Marek Jankech
 # Copyright Marek Jankech 2022 Released under the MIT license
 
-class score:
+class Score:
     def __init__(self, left: int, right: int) -> None:
         self.left = left
         self.right = right
 
-class datetime:
+class Datetime:
     def __init__(self, year, month, date, hours, minutes, seconds, weekday):
         self.seconds = seconds
         self.minutes = minutes
@@ -16,7 +16,7 @@ class datetime:
         self.month = month
         self.year = year
 
-class config:
+class Config:
     def __init__(self, scroll: bool, use_time: bool, use_date: bool,
         use_temperature: bool, bright_lvl: int) -> None:
         self.scroll = scroll

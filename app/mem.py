@@ -2,15 +2,15 @@
 # Copyright Marek Jankech 2022 Released under the MIT license
 
 from machine import I2C
-from app.data import config, score
+from app.data import Config, Score
 
 import app.constants as const
 
-class eeprom:
+class EEPROM:
     def __init__(self, i2c: I2C) -> None:
         self.i2c = i2c
         
-    def get_cfg(self) -> config:
+    def get_cfg(self) -> Config:
         cfg_byte = self.i2c.readfrom_mem(
             const.AT24C32_I2C_ADDR, const.CFG_ADDR, 1, addrsize=16)
         cfg_raw_val = cfg_byte[0]
@@ -22,9 +22,9 @@ class eeprom:
         bright_lvl = (cfg_raw_val & const.BRIGHT_LVL_CFG_MASK) \
             >> const.BRIGHT_LVL_BIT_SHIFT
 
-        return config(scroll, use_time, use_date, use_temperature, bright_lvl)
+        return Config(scroll, use_time, use_date, use_temperature, bright_lvl)
 
-    def save_cfg(self, cfg: config):
+    def save_cfg(self, cfg: Config):
         val = 0
         if cfg.scroll:
             val |= const.SCROLL_CFG_MASK
@@ -40,7 +40,7 @@ class eeprom:
         self.i2c.writeto_mem(const.AT24C32_I2C_ADDR, const.CFG_ADDR,
             self._tobyte(val), addrsize=16)
 
-    def get_last_score(self) -> score:
+    def get_last_score(self) -> Score:
         cfg_byte = self.i2c.readfrom_mem(
             const.AT24C32_I2C_ADDR, const.LAST_SCORE_ADDR, 1, addrsize=16)
         cfg_raw_val = cfg_byte[0]
@@ -49,9 +49,9 @@ class eeprom:
             >> const.LEFT_SCORE_BIT_SHIFT
         right_score = cfg_raw_val & const.RIGHT_SCORE_MASK
 
-        return score(left_score, right_score)
+        return Score(left_score, right_score)
 
-    def save_last_score(self, score: score):
+    def save_last_score(self, score: Score):
         val = score.right & const.RIGHT_SCORE_MASK
         val |= (score.left << const.LEFT_SCORE_BIT_SHIFT) & const.LEFT_SCORE_MASK
 
