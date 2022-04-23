@@ -55,7 +55,7 @@ ROW0 = 0x01
 ########################
 # SPI & I2C
 ########################
-DISPLAY_SPI_ID = 0
+DISPLAY_SPI_ID = 1
 DISPLAY_SPI_BAUD = 5_000_000
 DISPLAY_SPI_POLARITY = 1
 DISPLAY_SPI_PHASE = 0
@@ -65,14 +65,14 @@ RTC_I2C_ID = 1
 ########################
 # Pins
 ########################
-RECV_PIN = 13
+RTC_I2C_SDA_PIN = 26
+RTC_I2C_SCL_PIN = 27
 
-RTC_I2C_SDA_PIN = 14
-RTC_I2C_SCL_PIN = 15
+DISPLAY_SPI_CS_PIN = 13
+DISPLAY_SPI_CLK_PIN = 14
+DISPLAY_SPI_MOSI_PIN = 15
 
-DISPLAY_SPI_CS_PIN = 17
-DISPLAY_SPI_CLK_PIN = 18
-DISPLAY_SPI_MOSI_PIN = 19
+RECV_PIN = 28
 
 ########################
 # Buttons

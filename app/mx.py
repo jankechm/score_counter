@@ -32,20 +32,37 @@ class Matrix:
 			const.COLS_IN_MATRIX * const.MATRIXES_IN_ROW,
 			const.ROWS_IN_MATRIX * const.MATRIXES_IN_COL, framebuf.MONO_HLSB)
 
+		# Framebuffer methods
+		self.fill = self.fb.fill
+		self.fill_rect = self.fb.fill_rect
+		self.hline = self.fb.hline
+		self.vline = self.fb.vline
+		self.pixel = self.fb.pixel
+		self.text = self.fb.text
+
 		self.init_display(bright_lvl)
 
 	def init_display(self, bright_lvl: int):
 		self._write(const.SHUTDOWN, const.SHUTDOWN_MODE_ON)
 
-		self._write(const.DISPLAYTEST, const.DISPLAY_TEST_ON)
-		sleep_ms(300)
 		self._write(const.DISPLAYTEST, const.DISPLAYTEST_TEST_OFF)
 
 		self._write(const.SCANLIMIT, const.SCANLIMIT_8_DIGITS)
 		self._write(const.DECODEMODE, const.NO_BCD_DECODE)
 		self._write(const.INTENSITY, bright_lvl)
 
+	def reinit_display(self, bright_lvl: int):
+		self._write(const.SHUTDOWN, const.SHUTDOWN_MODE_ON)
+
+		self._write(const.SCANLIMIT, const.SCANLIMIT_8_DIGITS)
+		self._write(const.DECODEMODE, const.NO_BCD_DECODE)
+		self._write(const.INTENSITY, bright_lvl)
+
 		self._write(const.SHUTDOWN, const.SHUTDOWN_MODE_OFF)
+
+		self.fb.fill(1)
+		self.redraw_twice()
+		sleep_ms(300)
 
 	def turn_off(self):
 		self._write(const.SHUTDOWN, const.SHUTDOWN_MODE_ON)
@@ -54,13 +71,14 @@ class Matrix:
 		self._write(const.SHUTDOWN, const.SHUTDOWN_MODE_OFF)
 
 	def set_brightness(self, val):
-		if val > 3:
-			val = 3
-		elif val < 0:
-			val = 0
-
 		self._write(const.INTENSITY, val)
 
+	"""Some LEDs need to tell it twice to understand..."""
+	def redraw_twice(self):
+		self.redraw()
+		self.redraw()
+
+	"""Translate contents of the buffer to the LED matrix."""
 	def redraw(self):
 		for row_idx in range(const.ROWS_IN_MATRIX):
 			self.cs_pin.value(0)
@@ -86,9 +104,7 @@ class Matrix:
 		self._render_score_delimiter()
 		self._render_score(right_score, True)
 
-		self.redraw()
-		# Some LEDs need to tell it twice to understand...
-		self.redraw()
+		self.redraw_twice()
 
 	def show_time(self, hour: int, minute: int):
 		# at first, clear framebuffer
@@ -105,9 +121,7 @@ class Matrix:
 		self._render_2_digits_medium(font.get(m_tens), font.get(m_ones),
 				(m_ones == 1), True)
 
-		self.redraw()
-		# Some LEDs need to tell it twice to understand...
-		self.redraw()
+		self.redraw_twice()
 
 	def show_date_setting(self, day, month, year):
 		# at first, clear framebuffer
@@ -118,9 +132,7 @@ class Matrix:
 
 		self._render_date_setting_ordinal_dots(0)
 
-		self.redraw()
-		# Some LEDs need to tell it twice to understand...
-		self.redraw()
+		self.redraw_twice()
 
 	def show_variable_info(self, x_shift: int, dt: Datetime, celsius=-1):
 		cursor = 0
@@ -128,7 +140,7 @@ class Matrix:
 
 		self.fb.fill(0)
 
-		# -1 treated as date is not used
+		# -1 treated as not used
 		if -1 not in [dt.date, dt.month]:
 			cursor = self._render_date(
 				dt.date, dt.month, x_shift, cursor, font)
@@ -140,9 +152,7 @@ class Matrix:
 		if celsius != -1:
 			self._render_temperature(celsius, cursor, x_shift, font)
 
-		self.redraw()
-		# Some LEDs need to tell it twice to understand...
-		self.redraw()
+		self.redraw_twice()
 
 	def _render_temperature(self, celsius, cursor, x_shift, font):
 		self._render_2_digit_num(celsius, cursor + x_shift, font)
@@ -167,9 +177,7 @@ class Matrix:
 		# self.fb.text("jas{}".format(level), 0, 0, 1)
 		self._render_brightness(level)
 
-		self.redraw()
-		# Some LEDs need to tell it twice to understand...
-		self.redraw()
+		self.redraw_twice()
 
 	def clear_half(self, side):
 		if side == const.LEFT:
@@ -178,8 +186,7 @@ class Matrix:
 			self.fb.fill_rect(Matrix.HALF_WIDTH + 1, 0, Matrix.HALF_WIDTH - 1,
 				Matrix.HEIGHT, 0)
 
-		self.redraw()
-		self.redraw()
+		self.redraw_twice()
 
 	def clear_quarter(self, quarter):
 		if quarter == const.TOP_LEFT:
@@ -194,8 +201,7 @@ class Matrix:
 			self.fb.fill_rect(Matrix.HALF_WIDTH, Matrix.HALF_HEIGHT,
 				Matrix.HALF_WIDTH, Matrix.HALF_HEIGHT, 0)
 
-		self.redraw()
-		self.redraw()
+		self.redraw_twice()
 
 	def clear_matrix_row(self, row):
 		if row == const.TOP_ROW:
@@ -203,6 +209,8 @@ class Matrix:
 		else:
 			self.fb.fill_rect(0, Matrix.HALF_HEIGHT, Matrix.WIDTH,
 				Matrix.HALF_HEIGHT, 0)
+
+		self.redraw_twice()
 
 	def _write(self, register_add, data):
 		self.cs_pin.value(0)

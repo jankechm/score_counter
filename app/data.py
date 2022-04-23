@@ -2,7 +2,7 @@
 # Copyright Marek Jankech 2022 Released under the MIT license
 
 class Score:
-    def __init__(self, left: int, right: int) -> None:
+    def __init__(self, left, right):
         self.left = left
         self.right = right
 
@@ -24,3 +24,4 @@ class Config:
         self.use_date = use_date
         self.use_temperature = use_temperature
         self.bright_lvl = bright_lvl
+
