@@ -3,10 +3,9 @@
 
 import app.font as mx_font
 import app.constants as const
-from app.mx import Matrix
-from app.clock import RTC
-from app.mem import EEPROM
 from app.data import Score
+from app.hw import nv_mem, rtc, display
+from app.decorator import singleton
 
 class MxRenderable:
     """
@@ -14,7 +13,7 @@ class MxRenderable:
     on the matrix display.
     """
 
-    def render(self):
+    def render(self, x_shift=0, pre_clear=True):
         pass
 
 class MxNumeric(MxRenderable):
@@ -23,8 +22,8 @@ class MxNumeric(MxRenderable):
     on the matrix display.
     """
 
-    def __init__(self, mx: Matrix):
-        self._matrix = mx
+    def __init__(self):
+        self._matrix = display
 
     def _render_2_digit_num(self, num, x_shift=0):
         (tens, ones) = divmod(num, 10)
@@ -57,10 +56,10 @@ class MxScore(MxNumeric):
         X_OFFSET = 4
         X_OFFSET_FOR_1 = 7
 
-        def __init__(self, digit, side, mx: Matrix):
+        def __init__(self, digit, side):
             self._digit = digit
             self._side = side
-            self._matrix = mx
+            self._matrix = display
 
         def render(self, x_shift=0):
             offset = x_shift
@@ -89,11 +88,11 @@ class MxScore(MxNumeric):
         ONES_X_OFFSET = 6
         ONES_X_OFFSET_FOR_1 = 12
 
-        def __init__(self, tens, ones, side, mx: Matrix):
+        def __init__(self, tens, ones, side):
             self._tens = tens
             self._ones = ones
             self._side = side
-            self._matrix = mx
+            self._matrix = display
 
         def render(self, x_shift=0):
             tens_offset = x_shift
@@ -132,8 +131,8 @@ class MxScore(MxNumeric):
 
         RIGHT_SCORE_X_SHIFT = 18
 
-        def __init__(self, single_score, side, mx: Matrix):
-            super().__init__(mx)
+        def __init__(self, single_score, side):
+            super().__init__()
 
             self._single_score = single_score
             self._side = side
@@ -145,8 +144,8 @@ class MxScore(MxNumeric):
             self._render_2_digit_num(self._single_score, x_shift)
     
     
-    def __init__(self, nv_mem: EEPROM, mx: Matrix) -> None:
-        super().__init__(mx)
+    def __init__(self) -> None:
+        super().__init__()
 
         self._nv_mem = nv_mem
         self._prev_score = Score(0, 0)
@@ -189,73 +188,80 @@ class MxScore(MxNumeric):
 
         self.save()
 
-    """
-    Update previous score, increment current left score
-    and save current score to the non-volatile memory.
-    """
     def incr_left(self):
+        """
+        Update previous score, increment current left score
+        and save current score to the non-volatile memory.
+        """
+
         self._prev_score.left = self._score.left
         self._score.left += 1
         self.save()
 
-    """
-    Update previous score, decrement current left score
-    and save current score to the non-volatile memory.
-    """
     def decr_left(self):
+        """
+        Update previous score, decrement current left score
+        and save current score to the non-volatile memory.
+        """
+
         self._prev_score.left = self._score.left
         self._score.left -= 1
         self.save()
     
-    """
-    Update previous score, increment current right score
-    and save current score to the non-volatile memory.
-    """
     def incr_right(self):
+        """
+        Update previous score, increment current right score
+        and save current score to the non-volatile memory.
+        """
+
         self._prev_score.right = self._score.right
         self._score.right += 1
         self.save()
 
-    """
-    Update previous score, decrement current right score
-    and save current score to the non-volatile memory.
-    """
     def decr_right(self):
+        """
+        Update previous score, decrement current right score
+        and save current score to the non-volatile memory.
+        """
+
         self._prev_score.right = self._score.right
         self._score.right -= 1
         self.save()
 
-    """
-    Fetch the score from the non-volatile memory.
-    """
     def load(self):
+        """
+        Fetch the score from the non-volatile memory.
+        """
+
         self._score = self._nv_mem.get_last_score()
 
-    """
-    Save the score to the non-volatile memory.
-    """
     def save(self):
+        """
+        Save the score to the non-volatile memory.
+        """
+
         self._nv_mem.save_last_score(self._score)
 
-    def render(self, x_shift=0):
-        self._matrix.fill(0)
+    def render(self, x_shift=0, pre_clear=True):
+        if pre_clear:
+            self._matrix.fill(0)
 
         (l_tens, l_ones) = divmod(self._score.left, 10)
         (r_tens, r_ones) = divmod(self._score.right, 10)
 
         if l_tens > self.ONE_TENS_DIGIT or r_tens > self.ONE_TENS_DIGIT:
-            l_score = self.SingleHigherTwoDigit(self._score.left, const.LEFT, self._matrix)
-            r_score = self.SingleHigherTwoDigit(self._score.right, const.RIGHT, self._matrix)
+            l_score = self.SingleHigherTwoDigit(self._score.left, const.LEFT)
+            r_score = self.SingleHigherTwoDigit(self._score.right, const.RIGHT)
         else:
             if l_tens == self.ZERO_TENS_DIGIT:
-                l_score = self.SingleOneDigit(l_ones, const.LEFT, self._matrix)
+                l_score = self.SingleOneDigit(l_ones, const.LEFT)
             else:
-                l_score = self.SingleTwoDigit(l_tens, l_ones, const.LEFT, self._matrix)
+                l_score = self.SingleTwoDigit(l_tens, l_ones, const.LEFT)
 
             if r_tens == self.ZERO_TENS_DIGIT:
-                r_score = self.SingleOneDigit(r_ones, const.RIGHT, self._matrix)
+                r_score = self.SingleOneDigit(r_ones, const.RIGHT)
             else:
-                r_score = self.SingleTwoDigit(r_tens, r_ones, const.RIGHT, self._matrix)
+                r_score = self.SingleTwoDigit(r_tens, r_ones, const.RIGHT)
 
         l_score.render(x_shift)
         self._render_score_delimiter(x_shift)
@@ -267,6 +273,7 @@ class MxScore(MxNumeric):
         self._matrix.hline(15 + x_shift, 7, 2, 1)
         self._matrix.hline(15 + x_shift, 8, 2, 1)
 
+@singleton
 class MxDate(MxNumeric):
     DAY_X_SHIFT = 18
     DAY_ORDINAL_DOT_X_SHIFT = 16
@@ -281,8 +288,8 @@ class MxDate(MxNumeric):
 
     MONTHS_WITH_30_DAYS = [4, 6, 9, 11]
 
-    def __init__(self, rtc: RTC, mx: Matrix) -> None:
-        super().__init__(mx)
+    def __init__(self) -> None:
+        super().__init__()
 
         self._rtc = rtc
         self.pull()
@@ -324,75 +331,83 @@ class MxDate(MxNumeric):
         if self._month in self.MONTHS_WITH_30_DAYS and self._day >= self.MAX_DAY:
             self._day = self.MAX_DAY_30
 
-    """
-    Cyclic month increment.
-    """
     def incr_month(self):
+        """
+        Cyclic month increment.
+        """
+
         if self._month == self.MAX_MONTH:
             self._month = self.MIN_MONTH
         else:
             self._month += 1
     
-    """
-    Cyclic month decrement.
-    """
     def decr_month(self):
+        """
+        Cyclic month decrement.
+        """
+
         if self._month == self.MIN_MONTH:
             self._month = self.MAX_MONTH
         else:
             self._month -= 1
 
-    """
-    Cyclic day increment.
-    """
     def incr_day(self):
+        """
+        Cyclic day increment.
+        """
+        
         if self._day == self.MAX_DAY:
             self._day = self.MIN_DAY
         else:
             self._day += 1
 
-    """
-    Cyclic day decrement.
-    """
     def decr_day(self):
+        """
+        Cyclic day decrement.
+        """
+
         if self._day == self.MIN_DAY:
             self._day = self.MAX_DAY
         else:
             self._day -= 1
 
-    """
-    Cyclic year increment.
-    """
     def incr_year(self):
+        """
+        Cyclic year increment.
+        """
+
         if self._year == self.MAX_YEAR:
             self._year = self.MIN_YEAR
         else:
             self._year += 1
 
-    """
-    Cyclic year decrement.
-    """
     def decr_year(self):
+        """
+        Cyclic year decrement.
+        """
+
         if self._year == self.MIN_YEAR:
             self._year = self.MAX_YEAR
         else:
             self._year -= 1
 
-    """
-    Fetch the date from the Real Time Clock module.
-    """
     def pull(self):
+        """
+        Fetch the date from the Real Time Clock module.
+        """
+
         datetime = self._rtc.get_time()
 
         self._day = datetime.date
         self._month = datetime.month
         self._year = datetime.year
 
-    """
-    Fetch the date from the Real Time Clock module,
-    set the month & day and push it back to the RTC.
-    """
     def push(self):
+        """
+        Fetch the date from the Real Time Clock module,
+        set the month & day and push it back to the RTC.
+        """
+
         datetime = self._rtc.get_time()
 
         datetime.month = self._month
@@ -401,11 +416,12 @@ class MxDate(MxNumeric):
 
         self._rtc.set_time(datetime)
 
-    """
-    Render the day and month on one line and year on the second line.
-    This is intended for rendering just during date setting.
-    """
     def render_setting(self):
+        """
+        Render the day and month on one line and year on the second line.
+        This is intended for rendering just during date setting.
+        """
+
         self._matrix.fill(0)
 
         self._matrix.text("{:02d}{:02d}".format(self._day, self._month), 0, 0)
@@ -419,17 +435,21 @@ class MxDate(MxNumeric):
         self._matrix.pixel(15 + x_shift, 7, 1)
         self._matrix.pixel(31 + x_shift, 7, 1)
 
-    """
-    Render the day and month with their ordinal dots. No year rendering.
-    This is intended for rendering during basic operation mode.
-    """
-    def render(self, x_shift=0):
-        self._matrix.fill(0)
+    def render(self, x_shift=0, pre_clear=True):
+        """
+        Render the day and month with their ordinal dots. No year rendering.
+        This is intended for rendering during basic operation mode.
+        """
+
+        self.pull()
+
+        if pre_clear:
+            self._matrix.fill(0)
 
         self._render_2_digit_num(self._day, x_shift)
         self._render_ordinal_dot(x_shift)
-        self._render_2_digit_num(self._month, x_shift + MxDate.DAY_X_SHIFT)
-        self._render_ordinal_dot(x_shift + MxDate.DAY_ORDINAL_DOT_X_SHIFT)
+        self._render_2_digit_num(self._month, x_shift + self.DAY_X_SHIFT)
+        self._render_ordinal_dot(x_shift + self.DAY_ORDINAL_DOT_X_SHIFT)
 
         self._matrix.redraw_twice()
 
@@ -437,6 +457,7 @@ class MxDate(MxNumeric):
         self._matrix.hline(15 + x_shift, 13, 2, 1)
         self._matrix.hline(15 + x_shift, 14, 2, 1)
 
+@singleton
 class MxTime(MxNumeric):
     MINUTES_X_SHIFT = 18
     MAX_HOURS = 23
@@ -444,8 +465,8 @@ class MxTime(MxNumeric):
     MAX_MINUTES = 59
     MIN_MINUTES = 0
 
-    def __init__(self, rtc: RTC, mx: Matrix) -> None:
-        super().__init__(mx)
+    def __init__(self) -> None:
+        super().__init__()
         
         self._rtc = rtc
         self.pull()
@@ -470,56 +491,62 @@ class MxTime(MxNumeric):
         else:
             self._minutes = minutes
     
-    """
-    Cyclic hour increment.
-    """
     def incr_hour(self):
+        """
+        Cyclic hour increment.
+        """
+
         if self._hours == self.MAX_HOURS:
             self._hours = self.MIN_HOURS
         else:
             self._hours += 1
     
-    """
-    Cyclic hour decrement.
-    """
     def decr_hour(self):
+        """
+        Cyclic hour decrement.
+        """
+
         if self._hours == self.MIN_HOURS:
             self._hours = self.MAX_HOURS
         else:
             self._hours -= 1
 
-    """
-    Cyclic minute increment.
-    """
     def incr_minute(self):
+        """
+        Cyclic minute increment.
+        """
+
         if self._minutes == self.MAX_MINUTES:
             self._minutes = self.MIN_MINUTES
         else:
             self._minutes += 1
 
-    """
-    Cyclic minute decrement.
-    """
     def decr_minute(self):
+        """
+        Cyclic minute decrement.
+        """
+
         if self._minutes == self.MIN_MINUTES:
             self._minutes = self.MAX_MINUTES
         else:
             self._minutes -= 1
 
-    """
-    Fetch the time from the Real Time Clock module.
-    """
     def pull(self):
+        """
+        Fetch the time from the Real Time Clock module.
+        """
+
         datetime = self._rtc.get_time()
 
         self._hours = datetime.hours
         self._minutes = datetime.minutes
 
-    """
-    Fetch the time from the Real Time Clock module,
-    set the hours, minutes & seconds and push it back to the RTC.
-    """
     def push(self):
+        """
+        Fetch the time from the Real Time Clock module,
+        set the hours, minutes & seconds and push it back to the RTC.
+        """
+
         datetime = self._rtc.get_time()
 
         datetime.hours = self._hours
@@ -528,18 +555,28 @@ class MxTime(MxNumeric):
 
         self._rtc.set_time(datetime)
 
-    """
-    There are no differences when rendering the time in basic mode 
-    vs. in setting mode, so no other render method is required.
-    """
-    def render(self, x_shift=0):
-        self._matrix.fill(0)
+    def render_setting(self, x_shift=0, pre_clear=True):
+        """
+        This is intended for rendering during time setting.
+        """
+
+        if pre_clear:
+            self._matrix.fill(0)
 
         self._render_2_digit_num(self._hours, x_shift)
         self._render_time_delimiter(x_shift)
-        self._render_2_digit_num(self._minutes, x_shift + MxTime.MINUTES_X_SHIFT)
+        self._render_2_digit_num(self._minutes, x_shift + self.MINUTES_X_SHIFT)
 
         self._matrix.redraw_twice()
+
+    def render(self, x_shift=0, pre_clear=True):
+        """
+        This method pulls the actual time from the RTC module before rendering.
+        """
+
+        self.pull()
+
+        self.render_setting(x_shift, pre_clear)
 
     def _render_time_delimiter(self, x_shift=0):
         self._matrix.hline(15 + x_shift, 4, 2, 1)
@@ -551,9 +588,9 @@ class MxBrightness(MxRenderable):
     MAX_LVL = 3
     MIN_LVL = 0
 
-    def __init__(self, nv_mem: EEPROM, mx: Matrix):
+    def __init__(self):
         self._nv_mem = nv_mem
-        self._matrix = mx
+        self._matrix = display
         self.load()
 
     def set_lvl(self, lvl: int):
@@ -584,8 +621,9 @@ class MxBrightness(MxRenderable):
     def mx_set(self):
         self._matrix.set_brightness(self._level)
 
-    def render(self, x_shift=0):
-        self._matrix.fill(0)
+    def render(self, x_shift=0, pre_clear=True):
+        if pre_clear:
+            self._matrix.fill(0)
 
         font = mx_font.Medium()
 

@@ -1,12 +1,10 @@
 # Author: Marek Jankech
 # Copyright Marek Jankech 2022 Released under the MIT license
 
-from machine import Pin, SPI, I2C
+from machine import Pin
 from lib.ir_rx.nec import NEC_8  # NEC remote, 8 bit addresses
-from app.mx import Matrix
-from app.clock import RTC
-from app.mem import EEPROM
 from app.mx_data import MxDate, MxTime, MxScore, MxBrightness
+from app.hw import display
 
 import uasyncio as asyncio
 import app.constants as const
@@ -42,32 +40,20 @@ class App:
 		self.last_button = 0x00
 		self.reset_score_cnt = 0
 
-		# Real Time Clock & EEPROM config - same I2C bus
-		rtc_mem_i2c = I2C(const.RTC_I2C_ID, sda=Pin(const.RTC_I2C_SDA_PIN, Pin.OPEN_DRAIN),
-		    scl=Pin(const.RTC_I2C_SCL_PIN, Pin.OPEN_DRAIN), freq=400_000)
-		self.rtc = RTC(rtc_mem_i2c)
-		self.nv_mem = EEPROM(rtc_mem_i2c)
-
 		recv_pin = Pin(const.RECV_PIN, Pin.IN)
 		# Set button_handler as remote control IRQ handler
 		self.receiver = NEC_8(recv_pin, self.button_handler)
 
-		# Display config 
-		mx_spi = SPI(const.DISPLAY_SPI_ID, baudrate=const.DISPLAY_SPI_BAUD,
-			polarity=const.DISPLAY_SPI_POLARITY, phase=const.DISPLAY_SPI_PHASE,
-			sck=Pin(const.DISPLAY_SPI_CLK_PIN),
-			mosi=Pin(const.DISPLAY_SPI_MOSI_PIN))
-		cs_pin = Pin(const.DISPLAY_SPI_CS_PIN, Pin.OUT)
-		self.display = Matrix(mx_spi, cs_pin, self.nv_mem.get_cfg().bright_lvl)
+		self.display = display
 
 		# Count ticks for measuring period between button pushes
 		self.ticks = utime.ticks_ms()
 
 		# Info renderable on the matrix
-		self.mx_score = MxScore(self.nv_mem, self.display)
-		self.mx_bright = MxBrightness(self.nv_mem, self.display)
-		self.mx_date = MxDate(self.rtc, self.display)
-		self.mx_time = MxTime(self.rtc, self.display)
+		self.mx_score = MxScore()
+		self.mx_bright = MxBrightness()
+		self.mx_date = MxDate()
+		self.mx_time = MxTime()
 
 	def button_handler(self, button, addr, ctrl):
 		if button == NEC_8.REPEAT:
@@ -209,10 +195,10 @@ class App:
 			self.mx_date.render_setting()
 		elif self.set_hour:
 			self.mx_time.incr_hour()
-			self.mx_time.render()
+			self.mx_time.render_setting()
 		elif self.set_minute:
 			self.mx_time.incr_minute()
-			self.mx_time.render()
+			self.mx_time.render_setting()
 		elif self.set_brightness:
 			self.brightness_changed |= self.exec_not_too_fast(
 				self.mx_bright.incr)
@@ -235,10 +221,10 @@ class App:
 			self.mx_date.render_setting()
 		elif self.set_hour:
 			self.mx_time.decr_hour()
-			self.mx_time.render()
+			self.mx_time.render_setting()
 		elif self.set_minute:
 			self.mx_time.decr_minute()
-			self.mx_time.render()
+			self.mx_time.render_setting()
 		elif self.set_brightness:
 			self.brightness_changed |= self.exec_not_too_fast(
 				self.mx_bright.decr)
@@ -371,7 +357,7 @@ class App:
 
 				# Ensure no interrupts when reading/showing time
 				self.receiver.disable_irq()
-				self.mx_time.render()
+				self.mx_time.render_setting()
 				self.receiver.enable_irq()
 				await asyncio.sleep_ms(650)
 			while self.set_brightness:
@@ -394,6 +380,8 @@ class App:
 		asyncio.create_task(self.basic_operation())
 		asyncio.create_task(self.setting_operation())
 		# asyncio.create_task(self.mem_monitor())
+
+		print('Running')
 
 		# Run forever
 		while True:

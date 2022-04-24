@@ -18,7 +18,7 @@ class Matrix:
 	HALF_HEIGHT = const.ROWS_IN_MATRIX
 	BOTTOM_HALF_OFFSET = const.MATRIXES_IN_ROW * const.ROWS_IN_MATRIX
 
-	def __init__(self, spi: SPI, cs_pin: Pin, bright_lvl: int):
+	def __init__(self, spi: SPI, cs_pin: Pin, bright_lvl):
 		"""
 		Provides operations for showing patterns on matrix display.
 		"""
