@@ -13,7 +13,7 @@ class MxRenderable:
     on the matrix display.
     """
 
-    def render(self, x_shift=0, pre_clear=True):
+    def render(self, x_shift=0, pre_clear=True, redraw=True):
         pass
 
 class MxNumeric(MxRenderable):
@@ -242,7 +242,7 @@ class MxScore(MxNumeric):
 
         self._nv_mem.save_last_score(self._score)
 
-    def render(self, x_shift=0, pre_clear=True):
+    def render(self, x_shift=0, pre_clear=True, redraw=True):
         if pre_clear:
             self._matrix.fill(0)
 
@@ -267,7 +267,8 @@ class MxScore(MxNumeric):
         self._render_score_delimiter(x_shift)
         r_score.render(x_shift)
 
-        self._matrix.redraw_twice()
+        if redraw:
+            self._matrix.redraw_twice()
 
     def _render_score_delimiter(self, x_shift):
         self._matrix.hline(15 + x_shift, 7, 2, 1)
@@ -276,7 +277,7 @@ class MxScore(MxNumeric):
 @singleton
 class MxDate(MxNumeric):
     DAY_X_SHIFT = 18
-    DAY_ORDINAL_DOT_X_SHIFT = 16
+    DAY_ORDINAL_DOT_X_SHIFT = 18
 
     MAX_MONTH = 12
     MIN_MONTH = 1
@@ -435,7 +436,7 @@ class MxDate(MxNumeric):
         self._matrix.pixel(15 + x_shift, 7, 1)
         self._matrix.pixel(31 + x_shift, 7, 1)
 
-    def render(self, x_shift=0, pre_clear=True):
+    def render(self, x_shift=0, pre_clear=True, redraw=True):
         """
         Render the day and month with their ordinal dots. No year rendering.
         This is intended for rendering during basic operation mode.
@@ -451,7 +452,8 @@ class MxDate(MxNumeric):
         self._render_2_digit_num(self._month, x_shift + self.DAY_X_SHIFT)
         self._render_ordinal_dot(x_shift + self.DAY_ORDINAL_DOT_X_SHIFT)
 
-        self._matrix.redraw_twice()
+        if redraw:
+            self._matrix.redraw_twice()
 
     def _render_ordinal_dot(self, x_shift=0):
         self._matrix.hline(15 + x_shift, 13, 2, 1)
@@ -555,7 +557,7 @@ class MxTime(MxNumeric):
 
         self._rtc.set_time(datetime)
 
-    def render_setting(self, x_shift=0, pre_clear=True):
+    def render_setting(self, x_shift=0, pre_clear=True, redraw=True):
         """
         This is intended for rendering during time setting.
         """
@@ -567,16 +569,17 @@ class MxTime(MxNumeric):
         self._render_time_delimiter(x_shift)
         self._render_2_digit_num(self._minutes, x_shift + self.MINUTES_X_SHIFT)
 
-        self._matrix.redraw_twice()
+        if redraw:
+            self._matrix.redraw_twice()
 
-    def render(self, x_shift=0, pre_clear=True):
+    def render(self, x_shift=0, pre_clear=True, redraw=True):
         """
         This method pulls the actual time from the RTC module before rendering.
         """
 
         self.pull()
 
-        self.render_setting(x_shift, pre_clear)
+        self.render_setting(x_shift, pre_clear, redraw)
 
     def _render_time_delimiter(self, x_shift=0):
         self._matrix.hline(15 + x_shift, 4, 2, 1)
@@ -621,7 +624,7 @@ class MxBrightness(MxRenderable):
     def mx_set(self):
         self._matrix.set_brightness(self._level)
 
-    def render(self, x_shift=0, pre_clear=True):
+    def render(self, x_shift=0, pre_clear=True, redraw=True):
         if pre_clear:
             self._matrix.fill(0)
 
@@ -641,4 +644,5 @@ class MxBrightness(MxRenderable):
         s_char.render(self._matrix.fb)
         lvl_char.render(self._matrix.fb)
 
-        self._matrix.redraw_twice()
+        if redraw:
+            self._matrix.redraw_twice()

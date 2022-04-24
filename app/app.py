@@ -5,6 +5,7 @@ from machine import Pin
 from lib.ir_rx.nec import NEC_8  # NEC remote, 8 bit addresses
 from app.mx_data import MxDate, MxTime, MxScore, MxBrightness
 from app.hw import display
+from app.view import Viewer
 
 import uasyncio as asyncio
 import app.constants as const
@@ -54,6 +55,8 @@ class App:
 		self.mx_bright = MxBrightness()
 		self.mx_date = MxDate()
 		self.mx_time = MxTime()
+
+		self.viewer = Viewer(self.mx_score)
 
 	def button_handler(self, button, addr, ctrl):
 		if button == NEC_8.REPEAT:
@@ -292,9 +295,10 @@ class App:
 	async def basic_operation(self):
 		while True:
 			if self.basic_mode:
+				self.viewer.enable()
 				# if self.nv_mem.get_cfg().scroll:
-				if False:
-					await self.scroll_info()
+				if True:
+					await self.viewer.scroll()
 				else:
 					# Ensure no interrupts when reading/showing score
 					self.receiver.disable_irq()
@@ -327,6 +331,7 @@ class App:
 		# When a flag is set, remain in that state, until unset.
 		while True:
 			while self.set_left_score or self.set_right_score:
+				self.viewer.disable()
 				self.display.clear_half(
 					const.LEFT if self.set_left_score else const.RIGHT)
 				await asyncio.sleep_ms(300)
@@ -337,6 +342,7 @@ class App:
 				self.receiver.enable_irq()
 				await asyncio.sleep_ms(650)
 			while self.set_day or self.set_month or self.set_year:
+				self.viewer.disable()
 				if self.set_day:
 					self.display.clear_quarter(const.TOP_LEFT)
 				elif self.set_month:
@@ -351,6 +357,7 @@ class App:
 				self.receiver.enable_irq()
 				await asyncio.sleep_ms(650)
 			while self.set_hour or self.set_minute:
+				self.viewer.disable()
 				self.display.clear_half(
 					const.LEFT if self.set_hour else const.RIGHT)
 				await asyncio.sleep_ms(300)
@@ -361,11 +368,13 @@ class App:
 				self.receiver.enable_irq()
 				await asyncio.sleep_ms(650)
 			while self.set_brightness:
+				self.viewer.disable()
 				if self.brightness_changed:
 					self.mx_bright.mx_set()
 					self.mx_bright.render()
 					self.brightness_changed = False
 			if self.score_reset:
+				self.viewer.disable()
 				self.mx_score.render()
 				# Pause for some time before re-enabling basic mode again
 				await asyncio.sleep_ms(1500)
