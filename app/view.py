@@ -3,7 +3,7 @@
 
 import uasyncio as asyncio
 from app.hw import nv_mem, display
-from app.mx_data import MxRenderable, MxScore, MxDate, MxTime
+from app.mx_data import MxRenderable, MxDate, MxTime, MxTemperature
 
 class Viewer:
     ONE_INFO_LEN = 32
@@ -32,6 +32,8 @@ class Viewer:
             self._to_render.append(MxDate())
         if config.use_time:
             self._to_render.append(MxTime())
+        if config.use_temperature:
+            self._to_render.append(MxTemperature())
 
     def enable(self):
         self._should_run = True

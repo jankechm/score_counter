@@ -587,6 +587,43 @@ class MxTime(MxNumeric):
         self._matrix.hline(15 + x_shift, 10, 2, 1)
         self._matrix.hline(15 + x_shift, 11, 2, 1)
 
+@singleton
+class MxTemperature(MxNumeric):
+    def __init__(self) -> None:
+        super().__init__()
+        
+        self._rtc = rtc
+        self.pull()
+
+    def pull(self):
+        """
+        Fetch the temperature from the Real Time Clock module's sensor.
+        """
+
+        self._temperature = self._rtc.get_temperature()
+
+    def render(self, x_shift=0, pre_clear=True, redraw=True):
+        self.pull()
+
+        if pre_clear:
+            self._matrix.fill(0)
+        
+        self._render_2_digit_num(int(self._temperature), x_shift)
+
+        font = mx_font.Medium()
+
+        degree = font.get("°")
+        c_char = font.get("C")
+
+        degree.x_shift(const.COLS_IN_MATRIX * 2 + x_shift)
+        c_char.x_shift(const.COLS_IN_MATRIX * 3 + x_shift)
+        
+        degree.render(self._matrix.fb)
+        c_char.render(self._matrix.fb)
+
+        if redraw:
+            self._matrix.redraw_twice()
+
 class MxBrightness(MxRenderable):
     MAX_LVL = 3
     MIN_LVL = 0
