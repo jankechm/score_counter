@@ -2,8 +2,7 @@
 # Copyright Marek Jankech 2022 Released under the MIT license
 
 import uasyncio as asyncio
-import app.constants as const
-from app.hw import rtc, nv_mem, display
+from app.hw import nv_mem, display
 from app.mx_data import MxRenderable, MxScore, MxDate, MxTime
 
 class Viewer:
@@ -13,12 +12,11 @@ class Viewer:
     MS_BETWEEN_TRANSITION = 30
     MS_BETWEEN_TRANSITION_2 = 20
 
-    def __init__(self, score: MxScore):
-        self._rtc = rtc
+    def __init__(self):
         self._nv_mem = nv_mem
         self._matrix = display
 
-        self._score = score
+        self.score = None
         self._to_render = []
 
         self.load()
@@ -28,8 +26,8 @@ class Viewer:
     def load(self):
         config = self._nv_mem.get_cfg()
 
-        if True:
-            self._to_render.append(self._score)
+        if True and self.score is not None: # TODO check if score enabled in config
+            self._to_render.append(self.score)
         if config.use_date:
             self._to_render.append(MxDate())
         if config.use_time:
@@ -42,6 +40,8 @@ class Viewer:
         self._should_run = False
 
     async def scroll(self):
+        self.load()
+        
         if self._to_render:
             circular_to_render = CircularList(self._to_render)
 

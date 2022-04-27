@@ -56,7 +56,8 @@ class App:
 		self.mx_date = MxDate()
 		self.mx_time = MxTime()
 
-		self.viewer = Viewer(self.mx_score)
+		self.viewer = Viewer()
+		self.viewer.score = self.mx_score  # type: ignore
 
 	def button_handler(self, button, addr, ctrl):
 		if button == NEC_8.REPEAT:
