@@ -17,11 +17,12 @@ class Datetime:
         self.year = year
 
 class Config:
-    def __init__(self, scroll: bool, use_time: bool, use_date: bool,
-        use_temperature: bool, bright_lvl: int) -> None:
-        self.scroll = scroll
-        self.use_time = use_time
+    def __init__(self, use_score: bool, use_date: bool, use_time: bool,
+        use_temperature: bool, scroll: bool, bright_lvl: int) -> None:
+        self.use_score = use_score
         self.use_date = use_date
+        self.use_time = use_time
         self.use_temperature = use_temperature
+        self.scroll = scroll
         self.bright_lvl = bright_lvl
 

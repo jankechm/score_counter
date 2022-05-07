@@ -5,7 +5,8 @@ from machine import Pin
 from lib.ir_rx.nec import NEC_8  # NEC remote, 8 bit addresses
 from app.mx_data import MxDate, MxTime, MxScore, MxBrightness
 from app.hw import display
-from app.view import Viewer
+from app.view import BasicViewer, SettingsViewer
+from app.mx_data import MxUseScoreCfg, MxUseDateCfg, MxUseTimeCfg, MxUseTemperatureCfg, MxUseScrollingCfg
 
 import uasyncio as asyncio
 import app.constants as const
@@ -27,6 +28,11 @@ class App:
 		# Flags
 		self.set_left_score = False
 		self.set_right_score = False
+		self.set_score_cfg = False
+		self.set_date_cfg = False
+		self.set_time_cfg = False
+		self.set_temperature_cfg = False
+		self.set_scrolling_cfg = False
 		self.set_day = False
 		self.set_month = False
 		self.set_year = False
@@ -56,29 +62,47 @@ class App:
 		self.mx_date = MxDate()
 		self.mx_time = MxTime()
 
-		self.viewer = Viewer()
-		self.viewer.score = self.mx_score  # type: ignore
+		# Settings renderable on the matrix
+		self.mx_use_score_cfg = MxUseScoreCfg()
+		self.mx_use_date_cfg = MxUseDateCfg()
+		self.mx_use_time_cfg = MxUseTimeCfg()
+		self.mx_use_temperature = MxUseTemperatureCfg()
+		self.mx_use_scrolling = MxUseScrollingCfg()
+
+		self.basic_viewer = BasicViewer()
+		self.basic_viewer.score = self.mx_score  # type: ignore
+		self.settings_viewer = SettingsViewer()
 
 	def button_handler(self, button, addr, ctrl):
 		if button == NEC_8.REPEAT:
 			# Button Up/Down holding - repeated push
 			if self.last_button in [const.BUTTON_UP, const.BUTTON_DOWN]:
-				self.handle_regular_button(self.last_button)
+				self.handle_single_push_btn(self.last_button)
 			# Button 0 holding - potential score reset
 			elif self.last_button == const.BUTTON_0:
 				self.handle_score_reset()
 		else:
 			# reset hold button (reset score) counter
 			self.reset_score_cnt = 0
-			self.handle_regular_button(button)
+			self.handle_single_push_btn(button)
 			# Set new last pushed button for future potential repeat code button
 			self.last_button = button
 
-	def handle_regular_button(self, button):
+	def handle_single_push_btn(self, button):
 		if button == const.BUTTON_0:
 			self.handle_btn_0()
-		elif button == const.BUTTON_1:
-			self.handle_btn_1()
+		elif button == const.BUTTON_3:
+			self.handle_btn_3()
+		elif button == const.BUTTON_4:
+			self.handle_btn_4()
+		elif button == const.BUTTON_5:
+			self.handle_btn_5()
+		elif button == const.BUTTON_6:
+			self.handle_btn_6()
+		elif button == const.BUTTON_7:
+			self.handle_btn_7()
+		elif button == const.BUTTON_8:
+			self.handle_btn_8()
 		elif button == const.BUTTON_9:
 			self.handle_btn_9()
 		elif button == const.BUTTON_LEFT:
@@ -96,28 +120,13 @@ class App:
 		elif button == const.BUTTON_OK:
 			self.handle_btn_ok()
 
-	"""
-	In basic mode, when the counter hits defined threshold, it is treated 
-	as a signal	for reseting the whole score - the "reset score button" 
-	was held for long enough time.
-	"""
-	def handle_score_reset(self):
-		if self.basic_mode:
-			if self.reset_score_cnt >= 6:
-				self.mx_score.reset()
-				self.reset_score_cnt = 0
-				self.score_reset = True
-				self.basic_mode = False
-				print("Score reset to 0:0")
-			else:
-				self.reset_score_cnt += 1
-
-	"""
-	Execute the code conditionally.
-	Avoid unwanted double increment/decrement of values
-	- two changes of the same type in a very short time.
-	"""
 	def exec_not_too_fast(self, change):
+		"""
+		Execute the code conditionally.
+		Avoid unwanted double increment/decrement of values
+		- two changes of the same type in a very short time.
+		"""
+		
 		MIN_TICKS_DIFF = 200
 
 		t_curr = utime.ticks_ms()
@@ -131,7 +140,30 @@ class App:
 			executed = True
 		return executed
 	
+	def handle_score_reset(self):
+		"""
+		In basic mode, when the "reset score button" was held
+		for long enough time, it is treated as a signal for resetting
+		the whole score.
+		Long enough time means that the reset score counter hits
+		defined threshold.
+		"""
+
+		if self.basic_mode:
+			if self.reset_score_cnt >= 6:
+				self.mx_score.reset()
+				self.reset_score_cnt = 0
+				self.score_reset = True
+				self.basic_mode = False
+				print("Score reset to 0:0")
+			else:
+				self.reset_score_cnt += 1
+
 	def handle_btn_0(self):
+		"""
+		Reset something to 0.
+		"""
+
 		if self.set_left_score:
 			self.mx_score.set_left(0)
 			self.mx_score.render()
@@ -153,21 +185,83 @@ class App:
 			self.brightness_changed = True
 			print("Brightness set to 0")
 
-	def handle_btn_1(self):
-		if self.basic_mode:
-			self.set_brightness = True
-			self.brightness_changed = True
-			self.basic_mode = False
-			print("Setting brightness...")
+	def handle_btn_3(self):
+		"""
+		Score usage
+		"""
 
-	def handle_btn_9(self):
+		if self.basic_mode:
+			self.set_score_cfg = True
+			self.basic_mode = False
+			print("Setting score usage...")
+	
+	def handle_btn_4(self):
+		"""
+		Date usage
+		"""
+
+		if self.basic_mode:
+			self.set_date_cfg = True
+			self.basic_mode = False
+			print("Setting date usage...")
+
+	def handle_btn_5(self):
+		"""
+		Time usage
+		"""
+
+		if self.basic_mode:
+			self.set_time_cfg = True
+			self.basic_mode = False
+			print("Setting time usage...")
+
+	def handle_btn_6(self):
+		"""
+		Temperature usage
+		"""
+
+		if self.basic_mode:
+			self.set_temperature_cfg = True
+			self.basic_mode = False
+			print("Setting temperature usage...")
+
+	def handle_btn_7(self):
+		"""
+		Scrolling usage
+		"""
+
+		if self.basic_mode:
+			self.set_scrolling_cfg = True
+			self.basic_mode = False
+			print("Setting scrolling...")
+
+	def handle_btn_8(self):
+		"""
+		Date & time
+		"""
+
 		if self.basic_mode:
 			self.set_day = True
 			self.basic_mode = False
 			self.mx_date.pull()
 			self.mx_date.render_setting()
 
+	def handle_btn_9(self):
+		"""
+		Brightness
+		"""
+
+		if self.basic_mode:
+			self.set_brightness = True
+			self.brightness_changed = True
+			self.basic_mode = False
+			print("Setting brightness...")
+
 	def handle_btn_left(self):
+		"""
+		Left score
+		"""
+
 		if self.basic_mode:
 			self.set_left_score = True
 			self.basic_mode = False
@@ -175,6 +269,10 @@ class App:
 			print("Setting left score...")
 
 	def handle_btn_right(self):
+		"""
+		Right score
+		"""
+
 		if self.basic_mode:
 			self.set_right_score = True
 			self.basic_mode = False
@@ -182,12 +280,26 @@ class App:
 			print("Setting right score...")
 
 	def handle_btn_up(self):
+		"""
+		Increment or enable something.
+		"""
+
 		if self.set_left_score:
 			self.exec_not_too_fast(self.mx_score.incr_left)
 			self.mx_score.render()
 		elif self.set_right_score:
 			self.exec_not_too_fast(self.mx_score.incr_right)
 			self.mx_score.render()
+		elif self.set_score_cfg:
+			self.mx_use_score_cfg.use_it = True
+		elif self.set_date_cfg:
+			self.mx_use_date_cfg.use_it = True
+		elif self.set_time_cfg:
+			self.mx_use_time_cfg.use_it = True
+		elif self.set_temperature_cfg:
+			self.mx_use_temperature.use_it = True
+		elif self.set_scrolling_cfg:
+			self.mx_use_scrolling.use_it = True
 		elif self.set_day:
 			self.mx_date.incr_day()
 			self.mx_date.render_setting()
@@ -208,12 +320,26 @@ class App:
 				self.mx_bright.incr)
 
 	def handle_btn_down(self):
+		"""
+		Decrement or disable something.
+		"""
+
 		if self.set_left_score:
 			self.exec_not_too_fast(self.mx_score.decr_left)
 			self.mx_score.render()
 		elif self.set_right_score:
 			self.exec_not_too_fast(self.mx_score.decr_right)
 			self.mx_score.render()
+		elif self.set_score_cfg:
+			self.mx_use_score_cfg.use_it = False
+		elif self.set_date_cfg:
+			self.mx_use_date_cfg.use_it = False
+		elif self.set_time_cfg:
+			self.mx_use_time_cfg.use_it = False
+		elif self.set_temperature_cfg:
+			self.mx_use_temperature.use_it = False
+		elif self.set_scrolling_cfg:
+			self.mx_use_scrolling.use_it = False
 		elif self.set_day:
 			self.mx_date.decr_day()
 			self.mx_date.render_setting()
@@ -234,6 +360,10 @@ class App:
 				self.mx_bright.decr)
 
 	def handle_btn_star(self):
+		"""
+		Display on/off.
+		"""
+
 		if self.is_on:
 			print("Off")
 			self.display.turn_off()
@@ -244,10 +374,18 @@ class App:
 			self.is_on = True
 
 	def handle_btn_hash(self):
+		"""
+		Reinitialize display.
+		"""
+
 		print("Resetting display...")
 		self.display.reinit_display(self.mx_bright.get_lvl())
 
 	def handle_btn_ok(self):
+		"""
+		Confirm some setting.
+		"""
+
 		if self.set_left_score:
 			self.set_left_score = False
 			self.basic_mode = True
@@ -256,6 +394,31 @@ class App:
 			self.set_right_score = False
 			self.basic_mode = True
 			print("Right score set!")
+		elif self.set_score_cfg:
+			self.mx_use_score_cfg.save()
+			self.set_score_cfg = False
+			self.basic_mode = True
+			print("Score usage set!")
+		elif self.set_date_cfg:
+			self.mx_use_date_cfg.save()
+			self.set_date_cfg = False
+			self.basic_mode = True
+			print("Date usage set!")
+		elif self.set_time_cfg:
+			self.mx_use_time_cfg.save()
+			self.set_time_cfg = False
+			self.basic_mode = True
+			print("Time usage set!")
+		elif self.set_temperature_cfg:
+			self.mx_use_temperature.save()
+			self.set_temperature_cfg = False
+			self.basic_mode = True
+			print("Temperature usage set!")
+		elif self.set_scrolling_cfg:
+			self.mx_use_scrolling.save()
+			self.set_scrolling_cfg = False
+			self.basic_mode = True
+			print("Scrolling set!")
 		elif self.set_day:
 			self.set_day = False
 			self.set_month = True
@@ -296,91 +459,73 @@ class App:
 	async def basic_operation(self):
 		while True:
 			if self.basic_mode:
-				self.viewer.enable()
-				# if self.nv_mem.get_cfg().scroll:
-				if True:
-					await self.viewer.scroll()
-				else:
-					# Ensure no interrupts when reading/showing score
-					self.receiver.disable_irq()
-					self.mx_score.render()
-					self.receiver.enable_irq()
-					await asyncio.sleep_ms(3000)
+				self.settings_viewer.disable()
 
-					# Need to check again if still valid
-					if self.basic_mode:
-						self.mx_time.pull()
-						self.mx_time.render()
-						await asyncio.sleep_ms(2000)
+				await self.basic_viewer.view_info()
 			# pass execution to other tasks
 			await asyncio.sleep_ms(0)
-
-	async def scroll_info(self):
-		info_len = 12 * const.COLS_IN_MATRIX + 8
-		info_len = 5 * const.COLS_IN_MATRIX
-
-		for x_shift in range(32, -info_len, -1):
-			if not self.basic_mode:
-				break
-			
-			self.mx_time.pull()
-			self.mx_time.render(x_shift)
-
-			await asyncio.sleep_ms(30)
 
 	async def setting_operation(self):
 		# When a flag is set, remain in that state, until unset.
 		while True:
-			while self.set_left_score or self.set_right_score:
-				self.viewer.disable()
-				self.display.clear_half(
-					const.LEFT if self.set_left_score else const.RIGHT)
-				await asyncio.sleep_ms(300)
+			if not self.basic_mode:
+				self.basic_viewer.disable()
 
-				# Ensure no interrupts when reading/showing score
-				self.receiver.disable_irq()
-				self.mx_score.render()
-				self.receiver.enable_irq()
-				await asyncio.sleep_ms(650)
-			while self.set_day or self.set_month or self.set_year:
-				self.viewer.disable()
-				if self.set_day:
-					self.display.clear_quarter(const.TOP_LEFT)
-				elif self.set_month:
-					self.display.clear_quarter(const.TOP_RIGHT)
-				else:
-					self.display.clear_matrix_row(const.BOTTOM_ROW)
-				await asyncio.sleep_ms(300)
+				while self.set_left_score or self.set_right_score:
+					self.display.clear_half(
+						const.LEFT if self.set_left_score else const.RIGHT)
+					await asyncio.sleep_ms(300)
 
-				# Ensure no interrupts when reading/showing date
-				self.receiver.disable_irq()
-				self.mx_date.render_setting()
-				self.receiver.enable_irq()
-				await asyncio.sleep_ms(650)
-			while self.set_hour or self.set_minute:
-				self.viewer.disable()
-				self.display.clear_half(
-					const.LEFT if self.set_hour else const.RIGHT)
-				await asyncio.sleep_ms(300)
+					# Ensure no interrupts when reading/showing score
+					self.receiver.disable_irq()
+					self.mx_score.render()
+					self.receiver.enable_irq()
+					await asyncio.sleep_ms(650)
+				while self.set_score_cfg:
+					await self.settings_viewer.scroll_score_cfg()
+				while self.set_date_cfg:
+					await self.settings_viewer.scroll_date_cfg()
+				while self.set_time_cfg:
+					await self.settings_viewer.scroll_time_cfg()
+				while self.set_temperature_cfg:
+					await self.settings_viewer.scroll_temperature_cfg()
+				while self.set_scrolling_cfg:
+					await self.settings_viewer.scroll_scrolling_cfg()
+				while self.set_day or self.set_month or self.set_year:
+					if self.set_day:
+						self.display.clear_quarter(const.TOP_LEFT)
+					elif self.set_month:
+						self.display.clear_quarter(const.TOP_RIGHT)
+					else:
+						self.display.clear_matrix_row(const.BOTTOM_ROW)
+					await asyncio.sleep_ms(300)
 
-				# Ensure no interrupts when reading/showing time
-				self.receiver.disable_irq()
-				self.mx_time.render_setting()
-				self.receiver.enable_irq()
-				await asyncio.sleep_ms(650)
-			while self.set_brightness:
-				self.viewer.disable()
-				if self.brightness_changed:
-					self.mx_bright.mx_set()
-					self.mx_bright.render()
-					self.brightness_changed = False
-			if self.score_reset:
-				self.viewer.disable()
-				self.mx_score.render()
-				# Pause for some time before re-enabling basic mode again
-				await asyncio.sleep_ms(1500)
-				self.score_reset = False
-				self.basic_mode = True
+					# Ensure no interrupts when reading/showing date
+					self.receiver.disable_irq()
+					self.mx_date.render_setting()
+					self.receiver.enable_irq()
+					await asyncio.sleep_ms(650)
+				while self.set_hour or self.set_minute:
+					self.display.clear_half(
+						const.LEFT if self.set_hour else const.RIGHT)
+					await asyncio.sleep_ms(300)
+
+					# Ensure no interrupts when reading/showing time
+					self.receiver.disable_irq()
+					self.mx_time.render_setting()
+					self.receiver.enable_irq()
+					await asyncio.sleep_ms(650)
+				while self.set_brightness:
+					if self.brightness_changed:
+						self.mx_bright.mx_set()
+						self.mx_bright.render()
+						self.brightness_changed = False
+				if self.score_reset:
+					self.mx_score.render()
+					# Pause for some time before re-enabling basic mode again
+					await asyncio.sleep_ms(1500)
+					self.score_reset = False
+					self.basic_mode = True
 
 			# pass execution to other tasks
 			await asyncio.sleep_ms(0)

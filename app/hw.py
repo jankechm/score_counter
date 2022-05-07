@@ -17,7 +17,7 @@ from machine import Pin, SPI, I2C
 
 # Real Time Clock & EEPROM config - same I2C bus
 rtc_mem_i2c = I2C(const.RTC_I2C_ID, sda=Pin(const.RTC_I2C_SDA_PIN, Pin.OPEN_DRAIN),
-	scl=Pin(const.RTC_I2C_SCL_PIN, Pin.OPEN_DRAIN), freq=400_000)
+	scl=Pin(const.RTC_I2C_SCL_PIN, Pin.OPEN_DRAIN), freq=400_000)	
 
 # Display config 
 mx_spi = SPI(const.DISPLAY_SPI_ID, baudrate=const.DISPLAY_SPI_BAUD,
@@ -25,6 +25,8 @@ mx_spi = SPI(const.DISPLAY_SPI_ID, baudrate=const.DISPLAY_SPI_BAUD,
 	sck=Pin(const.DISPLAY_SPI_CLK_PIN),
 	mosi=Pin(const.DISPLAY_SPI_MOSI_PIN))
 cs_pin = Pin(const.DISPLAY_SPI_CS_PIN, Pin.OUT)
+
+print("I2C addresses: " + str(rtc_mem_i2c.scan()))
 
 ####################################################
 # 3 above mentioned objects representing HW modules.

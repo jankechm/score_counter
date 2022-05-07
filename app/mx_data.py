@@ -683,3 +683,112 @@ class MxBrightness(MxRenderable):
 
         if redraw:
             self._matrix.redraw_twice()
+
+class MxUsageCfg(MxRenderable):
+    def __init__(self) -> None:
+        self._nv_mem = nv_mem
+        self._matrix = display
+
+        self._text = ""
+        self.use_it = False
+
+        self.load()
+
+    def load(self):
+        pass
+
+    def save(self):
+        pass
+
+    def get_txt_len(self):
+        return len(self._text)
+
+    def render(self, x_shift=0, pre_clear=True, redraw=True):
+        if pre_clear:
+            self._matrix.fill(0)
+
+        if self.use_it:
+            value = "On"
+        else:
+            value = "Off"
+
+        self._matrix.text(self._text, 0 + x_shift, 0)
+        self._matrix.text(value, 0, 8)
+
+        if redraw:
+            self._matrix.redraw_twice()
+
+@singleton
+class MxUseScoreCfg(MxUsageCfg):
+    def __init__(self) -> None:
+        super().__init__()
+
+        self._text = "skore"
+
+    def load(self):
+        self.use_it = self._nv_mem.get_cfg().use_score
+
+    def save(self):
+        config = self._nv_mem.get_cfg()
+        config.use_score = self.use_it
+        self._nv_mem.save_cfg(config)
+
+@singleton
+class MxUseDateCfg(MxUsageCfg):
+    def __init__(self) -> None:
+        super().__init__()
+
+        self._text = "datum"
+
+    def load(self):
+        self.use_it = self._nv_mem.get_cfg().use_date
+
+    def save(self):
+        config = self._nv_mem.get_cfg()
+        config.use_date = self.use_it
+        self._nv_mem.save_cfg(config)
+
+@singleton
+class MxUseTimeCfg(MxUsageCfg):
+    def __init__(self) -> None:
+        super().__init__()
+
+        self._text = "cas"
+
+    def load(self):
+        self.use_it = self._nv_mem.get_cfg().use_time
+
+    def save(self):
+        config = self._nv_mem.get_cfg()
+        config.use_time = self.use_it
+        self._nv_mem.save_cfg(config)
+
+@singleton
+class MxUseTemperatureCfg(MxUsageCfg):
+    def __init__(self) -> None:
+        super().__init__()
+
+        self._text = "teplota"
+
+    def load(self):
+        self.use_it = self._nv_mem.get_cfg().use_temperature
+
+    def save(self):
+        config = self._nv_mem.get_cfg()
+        config.use_temperature = self.use_it
+        self._nv_mem.save_cfg(config)
+
+@singleton
+class MxUseScrollingCfg(MxUsageCfg):
+    def __init__(self) -> None:
+        super().__init__()
+
+        self._text = "scroll"
+
+    def load(self):
+        self.use_it = self._nv_mem.get_cfg().scroll
+
+    def save(self):
+        config = self._nv_mem.get_cfg()
+        config.scroll = self.use_it
+        self._nv_mem.save_cfg(config)
