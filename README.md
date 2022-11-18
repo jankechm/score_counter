@@ -1,5 +1,6 @@
 # Electronic score counter and clock on a matrix display.
-
-The display consists of eight 8*8 LED matrixes controlled by MAX7219.
-DS3231 was used as a Real Time Clock.
-Configuration and actual + previous score was stored on AT24C32 EEPROM memory.
+- The display consists of eight 8*8 LED matrixes controlled by MAX7219.
+- DS3231 is used as a Real Time Clock.
+- Configuration and actual + previous score is stored on AT24C32 EEPROM memory.
+- IR remote control with NEC protocol is used to send commands.
+- The code runs on RP2040 MCU (Raspberry Pi Pico) with installed micropython interpreter.
