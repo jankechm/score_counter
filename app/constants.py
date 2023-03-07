@@ -102,6 +102,7 @@ BUTTON_RIGHT = 0X5A
 ########################
 LEFT = 1
 RIGHT = 2
+LEFT_AND_RIGHT = 3
 
 TOP_ROW = 1
 BOTTOM_ROW = 2

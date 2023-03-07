@@ -48,6 +48,8 @@ class Matrix:
 		self._write(const.DECODEMODE, const.NO_BCD_DECODE)
 		self._write(const.INTENSITY, bright_lvl)
 
+		self._write(const.SHUTDOWN, const.SHUTDOWN_MODE_OFF)
+
 	def reinit_display(self, bright_lvl: int):
 		self._write(const.SHUTDOWN, const.SHUTDOWN_MODE_ON)
 
@@ -57,7 +59,9 @@ class Matrix:
 
 		self._write(const.SHUTDOWN, const.SHUTDOWN_MODE_OFF)
 
-		self.fb.fill(1)
+		# Signalize display re-init by horzizontal line in the middle.
+		self.fb.fill(0)
+		self.fb.fill_rect(0, Matrix.HALF_HEIGHT - 1, Matrix.WIDTH, 2, 1)
 		self.redraw_twice()
 		sleep_ms(300)
 
@@ -98,7 +102,12 @@ class Matrix:
 	def clear_half(self, side):
 		if side == const.LEFT:
 			self.fb.fill_rect(0, 0, Matrix.HALF_WIDTH - 1, Matrix.HEIGHT, 0)
+		elif side == const.RIGHT:
+			self.fb.fill_rect(Matrix.HALF_WIDTH + 1, 0, Matrix.HALF_WIDTH - 1,
+				Matrix.HEIGHT, 0)
 		else:
+			# both
+			self.fb.fill_rect(0, 0, Matrix.HALF_WIDTH - 1, Matrix.HEIGHT, 0)
 			self.fb.fill_rect(Matrix.HALF_WIDTH + 1, 0, Matrix.HALF_WIDTH - 1,
 				Matrix.HEIGHT, 0)
 

@@ -148,12 +148,25 @@ class MxScore(MxNumeric):
         super().__init__()
 
         self._nv_mem = nv_mem
-        self._prev_score = Score(0, 0)
+        self._last_changed = const.LEFT_AND_RIGHT
+
         self.load()
 
+        self._prev_score = Score(self._score.left, self._score.right)
+
+    def revert(self):
+        if self._last_changed == const.LEFT:
+            self._score.left = self._prev_score.left
+        elif self._last_changed == const.RIGHT:
+            self._score.right = self._prev_score.right
+        else:
+            self._score.left = self._prev_score.left
+            self._score.right = self._prev_score.right
+
+        self.save()
+
     def reset(self):
-        self._prev_score.left = self._score.left
-        self._prev_score.right = self._score.right
+        self._last_changed = const.LEFT_AND_RIGHT
 
         self._score.left = 0
         self._score.right = 0
@@ -161,11 +174,13 @@ class MxScore(MxNumeric):
         self.save()
 
     def set_score(self, l_val, r_val):
+        self._last_changed = const.LEFT_AND_RIGHT
+
         self.set_left(l_val)
         self.set_right(r_val)
 
     def set_left(self, val):
-        self._prev_score.left = self._score.left
+        self._last_changed = const.LEFT
 
         if val > self.MAX_SCORE:
             self._score.left = self.MAX_SCORE
@@ -174,10 +189,8 @@ class MxScore(MxNumeric):
         else:
             self._score.left = val
 
-        self.save()
-            
     def set_right(self, val):
-        self._prev_score.right = self._score.right
+        self._last_changed = const.RIGHT
 
         if val > self.MAX_SCORE:
             self._score.right = self.MAX_SCORE
@@ -186,17 +199,13 @@ class MxScore(MxNumeric):
         else:
             self._score.right = val
 
-        self.save()
-
     def incr_left(self):
         """
         Update previous score, increment current left score
         and save current score to the non-volatile memory.
         """
 
-        self._prev_score.left = self._score.left
-        self._score.left += 1
-        self.save()
+        self.set_left(self._score.left + 1)
 
     def decr_left(self):
         """
@@ -204,9 +213,7 @@ class MxScore(MxNumeric):
         and save current score to the non-volatile memory.
         """
 
-        self._prev_score.left = self._score.left
-        self._score.left -= 1
-        self.save()
+        self.set_left(self._score.left - 1)
     
     def incr_right(self):
         """
@@ -214,9 +221,7 @@ class MxScore(MxNumeric):
         and save current score to the non-volatile memory.
         """
 
-        self._prev_score.right = self._score.right
-        self._score.right += 1
-        self.save()
+        self.set_right(self._score.right + 1)
 
     def decr_right(self):
         """
@@ -224,9 +229,10 @@ class MxScore(MxNumeric):
         and save current score to the non-volatile memory.
         """
 
-        self._prev_score.right = self._score.right
-        self._score.right -= 1
-        self.save()
+        self.set_right(self._score.right - 1)
+
+    def get_last_changed_side(self):
+        return self._last_changed
 
     def load(self):
         """
@@ -237,9 +243,10 @@ class MxScore(MxNumeric):
 
     def save(self):
         """
-        Save the score to the non-volatile memory.
+        Confirm score and save it to the non-volatile memory.
         """
 
+        self._prev_score = self._nv_mem.get_last_score()
         self._nv_mem.save_last_score(self._score)
 
     def render(self, x_shift=0, pre_clear=True, redraw=True):
