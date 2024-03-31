@@ -7,4 +7,4 @@
 
 https://github.com/jankechm/score_counter/assets/22982620/1a510b1c-4cc3-4e5c-9afb-9124423c3265
 
-There is a new project https://github.com/jankechm/BLE-Score-Counter-Display which uses Bluetooth Low Energy and a smartphone app instead of IR remote control. Also, the external DS3231 RTC module was removed since the time is synchronized with smartphone and then counted by the internal RTC.
+There is a new project https://github.com/jankechm/BLE-Score-Counter-Display which uses Bluetooth Low Energy and a smartphone app instead of IR remote control. Also, the external DS3231 RTC module was removed since the time is synchronized with smartphone and then counted by the internal RTC. The AT24C32 EEPROM was removed too (1 shared module with DS3231) and the configuration is stored in the smartphone instead.
