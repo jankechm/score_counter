@@ -245,6 +245,8 @@ class App:
 	def handle_btn_8(self):
 		"""
 		Date & time
+		Start with setting the day. Pressing OK button should move to setting
+		the month and to other date & time parts.
 		"""
 
 		if self.basic_mode:
@@ -422,7 +424,7 @@ class App:
 				self.exit_cnt = 0
 				self.exit = True
 				self.basic_mode = False
-				print("Reverting score...")
+				print("Exiting...")
 			else:
 				self.exit_cnt += 1
 		else:
@@ -609,6 +611,7 @@ class App:
 micropython.alloc_emergency_exception_buf(100)
 
 try:
+	print('Start')
 	app = App()
 	asyncio.run(app.main())
 except KeyboardInterrupt:

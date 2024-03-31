@@ -134,3 +134,4 @@ matrix/FontDoubleBuf.py
 matrix/fonts.py
 .vscode/
 .micropico
+score_counter.code-workspace

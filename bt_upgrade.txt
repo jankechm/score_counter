@@ -1,0 +1,9 @@
+- Expand brightness to 16 levels (4 bits of memory)
+- Remove score reverting feature.
+- Configuration profiles are stored on the matrix display.
+    - Allow to create new named profiles.
+    - On startup, load last used profile.
+        - If no profile exists, use default, readonly profile.
+    - The name would take max 31 ASCII characters.
+        - 31 bytes in memory for the name + 1 byte for the configuration itself.
+    - Allow to store max 10 profiles.

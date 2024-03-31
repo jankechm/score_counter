@@ -413,7 +413,7 @@ class MxDate(MxNumeric):
     def push(self):
         """
         Fetch the date from the Real Time Clock module,
-        set the month & day and push it back to the RTC.
+        set the month & day & year and push it back to the RTC.
         """
 
         datetime = self._rtc.get_time()
