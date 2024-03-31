@@ -132,4 +132,5 @@ dmypy.json
 matrix/DigitDoubleBuf.py
 matrix/FontDoubleBuf.py
 matrix/fonts.py
-
+.vscode/
+.micropico
